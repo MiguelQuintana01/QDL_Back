@@ -4,7 +4,8 @@ from ftplib import FTP
 file_path = "files/indicadores.csv"
 local_file_path = "indicadores.csv"
 
-def ftp_download_file(ftp_server: str, ftp_port: int, username: str, password: str) -> str:
+
+def ftp_download_file(ftp_server: str, ftp_port: int, username: str, password: str, **kwargs) -> str:
     global file_path
     global local_file_path
 
@@ -32,7 +33,7 @@ def ftp_download_file(ftp_server: str, ftp_port: int, username: str, password: s
         raise Exception(f"Error al descargar el archivo: {error_message}")
 
 
-def ftp_delete_file(ftp_server: str, ftp_port: int, username: str, password: str) -> str:
+def ftp_delete_file(ftp_server: str, ftp_port: int, username: str, password: str, **kwargs) -> str:
     global file_path
 
     try:
@@ -58,7 +59,7 @@ def ftp_delete_file(ftp_server: str, ftp_port: int, username: str, password: str
         raise Exception(f"Error al eliminar el archivo: {error_message}")
 
 
-def ftp_get_creation_date(ftp_server: str, ftp_port: int, username: str, password: str) -> datetime:
+def ftp_get_creation_date(ftp_server: str, ftp_port: int, username: str, password: str, **kwargs) -> datetime:
     global file_path
     try:
         # Conexión al servidor FTP

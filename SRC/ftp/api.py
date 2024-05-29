@@ -1,12 +1,15 @@
-from fastapi import FastAPI, HTTPException, Form
+from fastapi import APIRouter, HTTPException, Form
 from fastapi.responses import FileResponse
 
+from SRC.api.utilities import is_yesterday_date
+from SRC.file.file import append_indicadores_history
 from SRC.ftp.ftp import ftp_download_file, ftp_delete_file, ftp_get_creation_date
+from SRC.settings.settings import settings
 
-app = FastAPI()
+api = APIRouter()
 
 
-@app.post("/download-ftp-file/")
+@api.get("")
 async def download_ftp_file(
         ftp_server: str = Form(...),
         ftp_port: int = Form(default=21),  # Puerto predeterminado de FTP es 21
@@ -20,7 +23,7 @@ async def download_ftp_file(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/delete-ftp-file")
+@api.delete("")
 async def erase_ftp_file(
         ftp_server: str = Form(...),
         ftp_port: int = Form(default=21),  # Puerto predeterminado de FTP es 21
@@ -33,7 +36,7 @@ async def erase_ftp_file(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/weights/ftp/date")
+@api.get("/date")
 async def get_date_creation(
         ftp_server: str = Form(...),
         ftp_port: int = Form(default=21),  # Puerto predeterminado de FTP es 21
@@ -42,13 +45,13 @@ async def get_date_creation(
 ):
     try:
         file_date = ftp_get_creation_date(ftp_server, ftp_port, username, password)
-        print(file_date.time())
+        print(is_yesterday_date(file_date))
         return file_date.isoformat()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@api.get("/verify")
+async def verify_ftp_file():
+    if is_yesterday_date(ftp_get_creation_date(**settings)):
+        append_indicadores_history()

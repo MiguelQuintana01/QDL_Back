@@ -1,0 +1,5 @@
+filePathCSV = "./indicadores.csv"
+filePathDates = "./dates.bin"
+filePathWeights = "./weights.bin"
+filePathMeasurements = "./measurements.npz"
+fileSettings = "./settings.json"
