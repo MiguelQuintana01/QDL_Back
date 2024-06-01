@@ -1,7 +1,7 @@
 import json
 import os
 
-from SRC.variables import fileSettings
+from src.variables import fileSettings
 
 
 def save_dict_as_json(dictionary, filename):

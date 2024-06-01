@@ -1,5 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from ftplib import FTP
+
+from src.utilities import get_gmt
 
 file_path = "files/indicadores.csv"
 local_file_path = "indicadores.csv"
@@ -83,7 +85,7 @@ def ftp_get_creation_date(ftp_server: str, ftp_port: int, username: str, passwor
         # Cierre de la sesión FTP
         ftp.quit()
 
-        return file_date_datetime
+        return file_date_datetime + timedelta(hours=get_gmt())
 
     except Exception as e:
         error_message = str(e)

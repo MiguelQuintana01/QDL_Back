@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Form
 
-from SRC.settings.settings import save_dict_as_json
-from SRC.variables import fileSettings
+from src.settings.settings import save_dict_as_json
+from src.variables import fileSettings
 
 api = APIRouter()
 

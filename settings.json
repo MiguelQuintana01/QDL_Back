@@ -2,5 +2,7 @@
     "ftp_server": "192.168.100.2",
     "ftp_port": 21,
     "username": "miguel",
-    "password": "hola"
+    "password": "hola",
+    "meta": 10000,
+    "gmt": -6
 }
