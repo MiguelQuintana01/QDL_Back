@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
-from ftplib import FTP
+from ftplib import FTP, error_perm
 
 from src.utilities import get_gmt
 
 file_path = "files/indicadores.csv"
 local_file_path = "indicadores.csv"
+directory = "/files"
 
 
 def ftp_download_file(ftp_server: str, ftp_port: int, username: str, password: str, **kwargs) -> str:
@@ -62,6 +63,10 @@ def ftp_delete_file(ftp_server: str, ftp_port: int, username: str, password: str
 
 
 def ftp_get_creation_date(ftp_server: str, ftp_port: int, username: str, password: str, **kwargs) -> datetime:
+    if not ftp_file_exists(ftp_server, ftp_port, username, password):
+        print("The file dont exist.")
+        return datetime(2200, 1, 1)
+
     global file_path
     try:
         # Conexión al servidor FTP
@@ -90,4 +95,40 @@ def ftp_get_creation_date(ftp_server: str, ftp_port: int, username: str, passwor
     except Exception as e:
         error_message = str(e)
         print(f"Error: {error_message}")
-        raise Exception(f"Error al obtener la fecha del archivo: {error_message}")
+        return datetime(2200, 1, 1)
+
+
+def ftp_file_exists(ftp_server: str, ftp_port: int, username: str, password: str, **kwargs):
+    ftp = None
+    filename = local_file_path
+
+    if not filename:
+        raise ValueError("The 'filename' argument is required.")
+
+    try:
+        # Connect to the FTP server on the specified port
+        ftp = FTP()
+        ftp.connect(host=ftp_server, port=ftp_port)
+        ftp.login(user=username, passwd=password)
+
+        # Change to the desired directory
+        ftp.cwd(directory)
+
+        # Try to get the file size; if it fails, it means the file doesn't exist
+        try:
+            ftp.size(filename)
+            return True  # File exists
+        except error_perm as e:
+            # Responds with an error if the file does not exist or there's a permission issue
+            if str(e).startswith('550'):
+                return False  # File doesn't exist
+            else:
+                raise  # Other FTP errors
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False
+    finally:
+        # Make sure to close the connection
+        if ftp:
+            ftp.quit()

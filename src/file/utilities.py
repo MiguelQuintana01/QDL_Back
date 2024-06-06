@@ -1,7 +1,5 @@
 import numpy as np
 
-from src.settings.settings import settings
-
 
 def hours_to_seconds_gmt(dates: np.ndarray) -> np.ndarray:
     vectorized_hour = np.vectorize(lambda x: x[:2])

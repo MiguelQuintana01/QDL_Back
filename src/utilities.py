@@ -1,3 +1,4 @@
+import time
 from datetime import datetime, timezone, timedelta
 
 
@@ -7,6 +8,11 @@ def midnight_local() -> datetime:
     # Create a datetime object for midnight of the current date
     today_midnight = datetime(now.year, now.month, now.day) - timedelta(hours=get_gmt())
     return today_midnight
+
+
+def now_unix() -> int:
+    now = int(time.mktime(datetime.now().timetuple()))
+    return now
 
 
 def get_gmt() -> int:
