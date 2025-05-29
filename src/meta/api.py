@@ -3,7 +3,6 @@ from fastapi import APIRouter, Form
 
 from src.file.file import load_bin
 from src.file.file_meta import save_bin_meta, download_csv_metas, delete_last_meta
-from src.utilities import get_gmt
 from src.variables import fileMeta
 
 api = APIRouter()
@@ -17,6 +16,11 @@ def post_meta(meta: float = Form()):
 @api.get("")
 def get_meta() -> dict:
     dates, metas = load_bin(fileMeta)
+
+    if dates.size <= 0:
+        dates = np.append(dates, 943920000)
+        metas = np.append(metas, 10000)
+        return {'date': dates, 'meta': metas}
 
     date, meta = dates[0], metas[0]
     return {'date': date, 'meta': meta}

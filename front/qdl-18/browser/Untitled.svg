@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 500 260" style="" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <style bx:fonts="Ubuntu">@import url(https://fonts.googleapis.com/css2?family=Ubuntu%3Aital%2Cwght%400%2C300%3B0%2C400%3B0%2C500%3B0%2C700%3B1%2C300%3B1%2C400%3B1%2C500%3B1%2C700&amp;display=swap);</style>
+  </defs>
+  <text style="fill: rgb(51, 51, 51); font-family: Ubuntu; font-size: 150px; white-space: pre;" x="0" y="139.579" transform="matrix(1.658373, 0, 0, 1.546126, 0, 0.397619)">QDL</text>
+</svg>

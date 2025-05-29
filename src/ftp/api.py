@@ -1,10 +1,9 @@
 from fastapi import APIRouter, HTTPException, Form
 from fastapi.responses import FileResponse
 
-from src.api.utilities import is_created_more_24h
-from src.file.file import append_indicadores_history
-from src.ftp.ftp import ftp_download_file, ftp_delete_file, ftp_get_creation_date
-from src.settings.settings import settings
+from src.file.file import verify_csv_file
+from src.ftp.ftp import ftp_download_file, ftp_delete_file, ftp_get_creation_date, ftp_check_access
+from src.settings.settings import get_settings
 
 api = APIRouter()
 
@@ -50,10 +49,11 @@ async def get_date_creation(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@api.get('/ftp_status')
+async def get_ftp_status():
+    return ftp_check_access(**get_settings())
+
+
 @api.get("/verify")
-async def verify_ftp_file():
-    if is_created_more_24h(ftp_get_creation_date(**settings)):
-        append_indicadores_history()
-        return "The file 'indicadores.csv' has been deleted and appended to the history."
-    else:
-        return "The file 'indicadores.csv' has not been deleted and remains in the scale."
+def verify_ftp_file():
+    return verify_csv_file()

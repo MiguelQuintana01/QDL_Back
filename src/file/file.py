@@ -1,36 +1,40 @@
 import io
 import os.path
+import shutil
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from starlette.responses import StreamingResponse
+from fastapi import UploadFile
+from starlette.responses import StreamingResponse, FileResponse
 
-from src.api.utilities import is_created_more_24h
 from src.file.api import convert_list_unix_to_iso8601
-from src.file.utilities import hours_to_seconds_gmt
+from src.file.utilities import hours_to_seconds_gmt, get_creation_date
 from src.ftp.ftp import ftp_get_creation_date, ftp_download_file, ftp_delete_file
-from src.settings.settings import settings
-from src.variables import filePathMeasurements, filePathCSV
-
-settings = settings
+from src.settings.settings import get_settings
+from src.utilities import unix_midnight_local_today, get_gmt, datetime_to_unix
+from src.variables import filePathMeasurements, filePathCSV, pathCSVtoNpz
 
 
 def convert_csv_to_numpy():
     try:
 
-        dtypes = [('fecha', 'U8'), ('peso', 'float')]
-        # Load the data from the CSV file
-        data = np.genfromtxt(filePathCSV, delimiter=',', names=True, dtype=dtypes)
+        dtypes = [('fecha', 'uint32'), ('peso', 'float')]
 
+        # Load the data from the CSV file
+        path_csv = os.path.abspath(filePathCSV)
+        data = np.genfromtxt(path_csv, delimiter=',', names=True, dtype=dtypes)
         # Separate the columns into individual arrays
         dates = data['fecha']
         weights = data['peso']
+        print(dates)
 
         seconds_of_server: np.ndarray = hours_to_seconds_gmt(dates)
 
-        creation: datetime = ftp_get_creation_date(**settings)
+        creation: datetime = ftp_get_creation_date(**get_settings())
+        if creation.year >= 2200:
+            creation = get_creation_date(filePathCSV)
         creation_midnight = datetime(creation.year, creation.month, creation.day)
         creation_unix: int = int(time.mktime(creation_midnight.timetuple()))
 
@@ -39,16 +43,17 @@ def convert_csv_to_numpy():
 
         seconds_gmt = (creation_unix + seconds_of_server).astype(np.uint64)
 
-        return seconds_gmt, weights
+        save_bin_weight(pathCSVtoNpz, seconds_gmt, weights)
+        return load_bin(pathCSVtoNpz)
 
-    except FileNotFoundError:
-        print(f"Error: The file indicadores.csv does not exist.")
-        return None, None
+    except Exception as e:
+        print(f"Error: convert_to_numpy {e}")
+        return np.array([]), np.array([])
 
 
-def save_bin_weight(date: np.ndarray, weights: np.ndarray) -> bool:
+def save_bin_weight(file_path: str, date: np.ndarray, weights: np.ndarray) -> bool:
     try:
-        np.savez_compressed(filePathMeasurements, date=date, weights=weights)
+        np.savez_compressed(file_path, date=date, weights=weights)
         return True
     except Exception as e:
         print(e)
@@ -98,16 +103,16 @@ def get_all_measures():
         history_weights = np.append(history_weights, csv_weights)
     except Exception as e:
         print(f"An error occurred while converting CSV to NumPy: {e}")
-
-    history_date, history_weights = order_measures_for_date(history_date, history_weights)
-    return history_date, history_weights
+    finally:
+        history_date, history_weights = order_measures_for_date(history_date, history_weights)
+        return history_date, history_weights
 
 
 def append_indicadores_history() -> tuple[np.ndarray, np.ndarray]:
-    ftp_download_file(**settings)
+    ftp_download_file(**get_settings())
     history_date, history_weights = get_all_measures()
-    ftp_delete_file(**settings)
-    save_bin_weight(history_date, history_weights)
+    ftp_delete_file(**get_settings())
+    save_bin_weight(filePathMeasurements, history_date, history_weights)
     return history_date, history_weights
 
 
@@ -131,21 +136,55 @@ def download_csv_weights(start: int = 0, end: int = 4102444800, gmt: int = 0):
     return response
 
 
-def verify_ftp_file():
-    if is_created_more_24h(ftp_get_creation_date(**settings)):
-        append_indicadores_history()
-        return "The file 'indicadores.csv' has been deleted and appended to the history."
-    else:
-        return "The file 'indicadores.csv' has not been deleted and remains in the scale."
+def convert_metas_to_csv():
+    from src.weights.api import get_weights_for_metas
+    dict_data = get_weights_for_metas()
+
+    table_lists = dict_data['table']
+    only_dates_times = convert_list_unix_to_iso8601(np.array(table_lists)[:, 0].tolist(), get_gmt())
+    for idx in range(len(table_lists)):
+        table_lists[idx][0] = only_dates_times[idx][0:10]
+
+    start_day_add = dict_data['star_day_add']
+    headers = (['Date'] + (['Start day'] if start_day_add else []) +
+               ['Toma ' + str(idx + 1) for idx in range(len(table_lists[0]) + (- 3 if start_day_add else - 2))] +
+               ['Total'])
+
+    df = pd.DataFrame(table_lists, columns=headers)
+
+    buffer = io.StringIO()
+
+    df.to_csv(buffer, index=False)
+
+    buffer.seek(0)
+
+    response = StreamingResponse(buffer, media_type="text/csv")
+
+    response.headers["Content-Disposition"] = "attachment; filename=datos.csv"
+
+    return response
+
+
+def verify_csv_file():
+    try:
+        ftp_download_file(**get_settings())
+        if datetime_to_unix(ftp_get_creation_date(**get_settings())) < unix_midnight_local_today():
+            append_indicadores_history()
+            return "The file 'indicadores.csv' has been deleted and appended to the history."
+        else:
+            return "The file 'indicadores.csv' has not been deleted and remains in the scale."
+    except Exception as e:
+        return f"Error with ftp: {e}"
 
 
 def get_weight(start: int, end: int):
     history_dates, history_weights = get_all_measures()
+    if history_dates.size <= 0:
+        return history_dates, history_weights
     mask_of_period = np.logical_and(history_dates >= start, history_dates <= end)
     history_dates = history_dates[mask_of_period]
     history_weights = history_weights[mask_of_period]
     return history_dates, history_weights
-
 
 
 def get_weights(start: int, end: int) -> dict:
@@ -153,3 +192,23 @@ def get_weights(start: int, end: int) -> dict:
     dict_measures = {"fecha": history_dates.tolist(),
                      "peso": history_weights.tolist()}
     return dict_measures
+
+
+async def download_file():
+    if not os.path.exists(filePathMeasurements):
+        return {"Error": "File not found"}
+    return FileResponse(filePathMeasurements, media_type='application/octet-stream', filename=filePathMeasurements)
+
+
+def download_csv(df: pd.DataFrame):
+    buffer = io.StringIO()
+
+    df.to_csv(buffer, index=False)
+
+    buffer.seek(0)
+
+    response = StreamingResponse(buffer, media_type="text/csv")
+
+    response.headers["Content-Disposition"] = "attachment; filename=datos.csv"
+
+    return response

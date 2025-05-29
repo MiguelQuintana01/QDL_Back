@@ -24,7 +24,7 @@ def load_json_as_dict(filename):
     :param filename: Name of the JSON file to read.
     :return: Dictionary obtained from the JSON file, or an empty dictionary if the file does not exist.
     """
-    if not os.path.exists(filename):
+    if not os.path.isfile(filename):
         print(f"File {filename} does not exist. Returning empty dictionary.")
         return {}
 
@@ -34,4 +34,21 @@ def load_json_as_dict(filename):
     return dictionary
 
 
+def verify_settings_exit():
+    if not os.path.isfile(fileSettings):
+        settings_default = {
+            "ftp_server": "",
+            "ftp_port": 21,
+            "username": "",
+            "password": "",
+            "gmt": ""
+        }
+        save_dict_as_json(settings_default, fileSettings)
+
+
+def get_settings():
+    return load_json_as_dict(fileSettings)
+
+
+verify_settings_exit()
 settings = load_json_as_dict(fileSettings)

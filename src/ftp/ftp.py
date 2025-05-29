@@ -1,17 +1,18 @@
+import os
 from datetime import datetime, timedelta
 from ftplib import FTP, error_perm
 
+from src.file.utilities import delete_file
 from src.utilities import get_gmt
 
-file_path = "files/indicadores.csv"
-local_file_path = "indicadores.csv"
+file_path = "files/Indicadores.csv"
+local_file_path = "Indicadores.csv"
 directory = "/files"
 
 
 def ftp_download_file(ftp_server: str, ftp_port: int, username: str, password: str, **kwargs) -> str:
     global file_path
     global local_file_path
-
     try:
         # Conexión al servidor FTP
         print(f"Conectando al servidor FTP: {ftp_server}:{ftp_port}")
@@ -20,6 +21,7 @@ def ftp_download_file(ftp_server: str, ftp_port: int, username: str, password: s
         ftp.login(user=username, passwd=password)
         print(f"Conectado al servidor FTP: {ftp_server}:{ftp_port}")
 
+        delete_file(local_file_path)
         # Descarga del archivo
         with open(local_file_path, "wb") as local_file:
             ftp.retrbinary(f"RETR {file_path}", local_file.write)
@@ -34,6 +36,41 @@ def ftp_download_file(ftp_server: str, ftp_port: int, username: str, password: s
         error_message = str(e)
         print(f"Error: {error_message}")
         raise Exception(f"Error al descargar el archivo: {error_message}")
+
+
+def ftp_check_access(ftp_server: str, ftp_port: int, username: str, password: str) -> bool:
+    try:
+        # Conexión al servidor FTP
+        print(f"Conectando al servidor FTP: {ftp_server}:{ftp_port}")
+        ftp = FTP()
+        ftp.connect(ftp_server, ftp_port)
+        ftp.login(user=username, passwd=password)
+        print(f"Conectado al servidor FTP: {ftp_server}:{ftp_port}")
+
+        # Cierre de la sesión FTP
+        ftp.quit()
+        print(f"Acceso al servidor FTP verificado exitosamente")
+
+        return {'ftp_status': True}
+
+    except Exception as e:
+        error_message = str(e)
+        print(f"Error: {error_message}")
+        return {'ftp_status': False}
+
+
+def delete_csv_file():
+    try:
+        if os.path.isfile(local_file_path):
+            os.remove(file_path)
+            print(f"File '{local_file_path}' has been deleted successfully.")
+            return True
+        else:
+            print(f"File '{local_file_path}' does not exist.")
+            return False
+    except Exception as e:
+        print(f"An error occurred while trying to delete the file: {e}")
+        return False
 
 
 def ftp_delete_file(ftp_server: str, ftp_port: int, username: str, password: str, **kwargs) -> str:
