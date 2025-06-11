@@ -7,7 +7,7 @@ from starlette.responses import HTMLResponse
 
 from src.ftp.api import api as ftp_api
 from src.settings.api import api as settings_api
-from src.variables import prefix
+from src.variables import Globs
 from src.weights.api import api as weights_api
 from src.file.api import api as file_api
 from src.meta.api import api as meta_api
@@ -24,12 +24,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(ftp_api, prefix=prefix+"/ftp")
-app.include_router(settings_api, prefix=prefix+"/settings")
-app.include_router(weights_api, prefix=prefix+"/weights")
-app.include_router(file_api, prefix=prefix+"/files")
-app.include_router(meta_api, prefix=prefix+"/metas")
-app.include_router(general_api, prefix=prefix+"/general")
+app.include_router(ftp_api, prefix=Globs.prefix+"/ftp")
+app.include_router(settings_api, prefix=Globs.prefix+"/settings")
+app.include_router(weights_api, prefix=Globs.prefix+"/weights")
+app.include_router(file_api, prefix=Globs.prefix+"/files")
+app.include_router(meta_api, prefix=Globs.prefix+"/metas")
+app.include_router(general_api, prefix=Globs.prefix+"/general")
 
 actual_dir = os.getcwd()
 browser_path = os.path.abspath("front/qdl-18/browser")

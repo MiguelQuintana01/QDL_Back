@@ -1,7 +1,7 @@
 import json
 import os
 
-from src.variables import fileSettings
+from src.variables import Globs
 
 
 def save_dict_as_json(dictionary, filename):
@@ -35,7 +35,7 @@ def load_json_as_dict(filename):
 
 
 def verify_settings_exit():
-    if not os.path.isfile(fileSettings):
+    if not os.path.isfile(Globs.fileSettings):
         settings_default = {
             "ftp_server": "",
             "ftp_port": 21,
@@ -43,12 +43,12 @@ def verify_settings_exit():
             "password": "",
             "gmt": ""
         }
-        save_dict_as_json(settings_default, fileSettings)
+        save_dict_as_json(settings_default, Globs.fileSettings)
 
 
 def get_settings():
-    return load_json_as_dict(fileSettings)
+    return load_json_as_dict(Globs.fileSettings)
 
 
 verify_settings_exit()
-settings = load_json_as_dict(fileSettings)
+settings = load_json_as_dict(Globs.fileSettings)

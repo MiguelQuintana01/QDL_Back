@@ -1,6 +1,6 @@
 {
-    "ftp_server": "192.168.100.78",
-    "ftp_port": 45709,
+    "ftp_server": "localhost",
+    "ftp_port": 21,
     "username": "miguel",
-    "password": "hola"
+    "password": "12345"
 }

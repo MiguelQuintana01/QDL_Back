@@ -3,7 +3,7 @@ from fastapi import APIRouter, Form
 
 from src.file.file import load_bin
 from src.file.file_meta import save_bin_meta, download_csv_metas, delete_last_meta
-from src.variables import fileMeta
+from src.variables import Globs
 
 api = APIRouter()
 
@@ -15,7 +15,7 @@ def post_meta(meta: float = Form()):
 
 @api.get("")
 def get_meta() -> dict:
-    dates, metas = load_bin(fileMeta)
+    dates, metas = load_bin(Globs.fileMeta)
 
     if dates.size <= 0:
         dates = np.append(dates, 943920000)
@@ -29,7 +29,7 @@ def get_meta() -> dict:
 @api.get("/all")
 def get_all_metas() -> dict:
     try:
-        dates, metas = load_bin(fileMeta)
+        dates, metas = load_bin(Globs.fileMeta)
         return {'dates': dates.tolist(), 'metas': metas.tolist()}
     except Exception as e:
         return {'dates': np.ndarray, 'metas': np.ndarray}

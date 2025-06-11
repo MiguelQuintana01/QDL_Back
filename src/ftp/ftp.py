@@ -75,7 +75,7 @@ def delete_csv_file():
 
 def ftp_delete_file(ftp_server: str, ftp_port: int, username: str, password: str, **kwargs) -> str:
     global file_path
-
+    return
     try:
         # Conexión al servidor FTP
         print(f"Conectando al servidor FTP: {ftp_server}:{ftp_port}")

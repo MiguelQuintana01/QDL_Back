@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from src.file.file import save_bin_weight, load_bin
 from src.settings.settings import save_dict_as_json, load_json_as_dict
-from src.variables import fileSettings, fileMetasWeights
+from src.variables import Globs
 
 
 class TimesWeightsMetas(BaseModel):
@@ -32,7 +32,7 @@ async def download_ftp_file(
 ):
     try:
         settings = {'ftp_server': ftp_server, 'ftp_port': ftp_port, 'username': username, 'password': password}
-        save_dict_as_json(settings, fileSettings)
+        save_dict_as_json(settings, Globs.fileSettings)
         return "Settings updated"
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -52,7 +52,7 @@ async def time_metas(metas: TimesWeightsMetas):
         dates_sorted = np.argsort(metas.dates)
         metas.dates = metas.dates[dates_sorted]
         metas.weights = metas.weights[dates_sorted]
-        save_bin_weight(fileMetasWeights, metas.dates, metas.weights)
+        save_bin_weight(Globs.fileMetasWeights, metas.dates, metas.weights)
         return "Settings update"
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -61,7 +61,7 @@ async def time_metas(metas: TimesWeightsMetas):
 @api.get("")
 async def read_settings():
     try:
-        settings_dict: dict = load_json_as_dict(fileSettings)
+        settings_dict: dict = load_json_as_dict(Globs.fileSettings)
         settings_dict['password'] = ""
         return settings_dict
     except Exception as e:
@@ -71,7 +71,7 @@ async def read_settings():
 @api.get("/metas")
 async def read_metas():
     try:
-        metas = load_bin(fileMetasWeights)
+        metas = load_bin(Globs.fileMetasWeights)
         data = {'dates': metas[0].tolist(), 'weights': metas[1].tolist()}
         return data
     except Exception as e:
@@ -87,7 +87,7 @@ async def erase_metas():
         file_path (str): The path to the file to be deleted.
         """
     try:
-        file_path = fileMetasWeights
+        file_path = Globs.fileMetasWeights
         import os
         if os.path.isfile(file_path):
             os.remove(file_path)

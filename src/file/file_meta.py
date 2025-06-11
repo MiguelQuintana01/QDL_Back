@@ -7,18 +7,18 @@ from starlette.responses import StreamingResponse
 from src.file.api import convert_list_unix_to_iso8601
 from src.file.file import load_bin, order_measures_for_date
 from src.utilities import now_unix
-from src.variables import fileMeta
+from src.variables import Globs
 
 
 def save_bin_meta(meta: float) -> bool:
     try:
-        date_bin, meta_bin = load_bin(fileMeta)
+        date_bin, meta_bin = load_bin(Globs.fileMeta)
 
         meta = np.append(meta, meta_bin)
         date = np.append(now_unix(), date_bin)
 
         date, meta = order_measures_for_date(date, meta)
-        np.savez_compressed(fileMeta, date=date, meta=meta)
+        np.savez_compressed(Globs.fileMeta, date=date, meta=meta)
         return True
     except Exception as e:
         print(e)
@@ -27,17 +27,17 @@ def save_bin_meta(meta: float) -> bool:
 
 def delete_last_meta() -> dict:
     try:
-        date_bin, meta_bin = load_bin(fileMeta)
+        date_bin, meta_bin = load_bin(Globs.fileMeta)
         if date_bin.size > 1:
             date_bin, meta_bin = order_measures_for_date(date_bin, meta_bin)
             date_bin = date_bin[1:]
             meta_bin = meta_bin[1:]
-            np.savez_compressed(fileMeta, date=date_bin, meta=meta_bin)
+            np.savez_compressed(Globs.fileMeta, date=date_bin, meta=meta_bin)
             return {"message": "Meta eliminada"}
         elif date_bin.size == 1:
             date_bin = np.array([], dtype=date_bin.dtype)
             meta_bin = np.array([], dtype=meta_bin.dtype)
-            np.savez_compressed(fileMeta, date=date_bin, meta=meta_bin)
+            np.savez_compressed(Globs.fileMeta, date=date_bin, meta=meta_bin)
             return {"message": "Meta eliminada"}
         else:
             return {'message': "No hay metas"}
@@ -47,7 +47,7 @@ def delete_last_meta() -> dict:
 
 
 def download_csv_metas(start: int = 0, end: int = 4102444800, gmt: int = 0):
-    dict_data = load_bin(fileMeta)
+    dict_data = load_bin(Globs.fileMeta)
 
     dict_data = {'dates': dict_data[0] + gmt * 3600, 'metas': dict_data[1]}
 

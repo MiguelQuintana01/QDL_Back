@@ -6,7 +6,7 @@ from starlette.responses import FileResponse
 
 from src.file.file import download_csv_weights, verify_csv_file, get_all_measures, load_bin, convert_metas_to_csv
 from src.utilities import get_gmt
-from src.variables import fileMetasWeights, filePathMeasurements
+from src.variables import Globs
 
 api = APIRouter()
 
@@ -46,7 +46,7 @@ def get_weights_for_metas():
     # times_metas = load_json_as_dict(fileTimesMetas)
     SECONDS_OF_DAY: int = 24 * 3600
     GMT = get_gmt() * 3600
-    data_metas = load_bin(fileMetasWeights)
+    data_metas = load_bin(Globs.fileMetasWeights)
 
     data_sorted = np.argsort(data_metas[0])
     data_metas[0] = data_metas[0][data_sorted]
@@ -111,14 +111,14 @@ def get_weights_for_metas():
 
 @api.get("/download")
 async def api_download_file():
-    if not os.path.exists(filePathMeasurements):
+    if not os.path.exists(Globs.filePathMeasurements):
         return {"Error": "File not found"}
-    return FileResponse(filePathMeasurements, media_type='application/octet-stream', filename=filePathMeasurements)
+    return FileResponse(Globs.filePathMeasurements, media_type='application/octet-stream', filename=filePathMeasurements)
 
 
 @api.post("/upload")
 async def api_upload_file(file: UploadFile = File(...)):
-    file_path = filePathMeasurements  # Definimos la ruta y el nombre del archivo en el disco duro
+    file_path = Globs.filePathMeasurements  # Definimos la ruta y el nombre del archivo en el disco duro
     with open(file_path, "wb") as buffer:
         while chunk := await file.read(4096):
             buffer.write(chunk)
